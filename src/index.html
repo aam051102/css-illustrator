@@ -1,0 +1,168 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <!-- Meta tags -->
+        <meta charset="utf-8" />
+        <meta http-equiv="X-UA-Compatible" content="IE=edge,chrome=1" />
+        <meta
+            content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=0"
+            name="viewport"
+        />
+        <meta name="viewport" content="width=device-width" />
+
+        <!-- Favicon and title -->
+        <link rel="icon" href="./fav.png" />
+        <title>CSS Image Builder</title>
+
+        <!-- Halfmoon CSS -->
+        <link
+            href="https://cdn.jsdelivr.net/npm/halfmoon@1.1.1/css/halfmoon-variables.min.css"
+            rel="stylesheet"
+        />
+
+        <!-- CSS -->
+        <link rel="stylesheet" href="./style.css" />
+    </head>
+    <body
+        class="with-custom-webkit-scrollbars with-custom-css-scrollbars dark-mode"
+        data-dm-shortcut-enabled="true"
+        data-sidebar-shortcut-enabled="true"
+        data-set-preferred-mode-onload="true"
+    >
+        <!-- Code modal start-->
+        <div class="modal" id="view-code" tabindex="-1" role="dialog">
+            <div class="modal-dialog" role="document">
+                <div class="modal-content">
+                    <a href="#" class="close" role="button" aria-label="Close">
+                        <span aria-hidden="true">&times;</span>
+                    </a>
+                    <h5 class="modal-title">Code</h5>
+                    <div class="form-group">
+                        <textarea
+                            class="form-control"
+                            id="code-output"
+                            readonly
+                        ></textarea>
+                    </div>
+                    <div class="text-right mt-20">
+                        <a href="#" class="btn mr-5" role="button">Close</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+        <!-- Code modal end-->
+
+        <!-- Page wrapper start -->
+        <div class="page-wrapper with-navbar with-sidebar">
+            <div class="sticky-alerts"></div>
+
+            <!-- Navbar start -->
+            <nav class="navbar justify-content-between">
+                <div>
+                    <a
+                        class="btn btn-primary"
+                        type="button"
+                        role="button"
+                        id="code-generate"
+                        href="#view-code"
+                    >
+                        View Code
+                    </a>
+                </div>
+
+                <div id="creation-elements">
+                    <div class="creation-element creation-element-circle"></div>
+                    <div class="creation-element creation-element-square"></div>
+                </div>
+            </nav>
+            <!-- Navbar end -->
+
+            <!-- Sidebar start -->
+            <div class="sidebar p-15">
+                <!-- Element settings start-->
+                <section>
+                    <h2 class="content-title">Element</h2>
+                    <div class="form-row row-eq-spacing-sm">
+                        <div class="col-sm">
+                            <label for="element-x">X</label>
+                            <input
+                                id="element-x"
+                                class="form-control"
+                                type="number"
+                                min="0"
+                                value="0"
+                                disabled
+                            />
+                        </div>
+                        <div class="col-sm">
+                            <label for="element-y">Y</label>
+                            <input
+                                id="element-y"
+                                class="form-control"
+                                type="number"
+                                min="0"
+                                value="0"
+                                disabled
+                            />
+                        </div>
+                    </div>
+
+                    <div class="form-row row-eq-spacing-sm">
+                        <div class="col-sm">
+                            <label for="element-width">Width</label>
+                            <input
+                                id="element-width"
+                                class="form-control"
+                                type="number"
+                                min="1"
+                                value="100"
+                                disabled
+                            />
+                        </div>
+                        <div class="col-sm">
+                            <label for="element-height">Height</label>
+                            <input
+                                id="element-height"
+                                class="form-control"
+                                type="number"
+                                min="1"
+                                value="100"
+                                disabled
+                            />
+                        </div>
+                    </div>
+
+                    <div class="form-group">
+                        <label for="element-color">Color</label>
+                        <input
+                            id="element-color"
+                            class="form-control"
+                            type="color"
+                            disabled
+                        />
+                    </div>
+                </section>
+                <!-- Element settings end-->
+
+                <!-- Elements start -->
+                <section class="border-top pt-20 mt-20">
+                    <h2 class="content-title">Elements</h2>
+                    <ul class="list" id="element-list"></ul>
+                </section>
+                <!-- Elements end -->
+            </div>
+            <!-- Sidebar end -->
+
+            <!-- Content wrapper start -->
+            <div class="content-wrapper overflow-hidden">
+                <section id="canvas"></section>
+            </div>
+            <!-- Content wrapper end -->
+        </div>
+        <!-- Page wrapper end -->
+
+        <!-- Halfmoon JS -->
+        <script src="https://cdn.jsdelivr.net/npm/halfmoon@1.1.1/js/halfmoon.min.js"></script>
+        <script type="module" src="./script.js"></script>
+    </body>
+</html>
