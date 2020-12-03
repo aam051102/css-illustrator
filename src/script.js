@@ -1,5 +1,3 @@
-import interact from "https://cdn.interactjs.io/v1.10.0/interactjs/index.js";
-
 let selectedElement = undefined;
 let clipboard = undefined;
 let shiftHeld = false;
@@ -10,6 +8,7 @@ const canvasDOM = document.querySelector("#canvas");
 const codeOutputDOM = document.querySelector("#code-output");
 const codeGenerateDOM = document.querySelector("#code-generate");
 const elementListDOM = document.querySelector("#element-list");
+const creationElementsDOM = document.querySelector("#creation-elements");
 
 const elementXInputDOM = document.querySelector("#element-x");
 const elementYInputDOM = document.querySelector("#element-y");
@@ -18,22 +17,25 @@ const elementHeightInputDOM = document.querySelector("#element-height");
 const elementColorInputDOM = document.querySelector("#element-color");
 
 // Classes
-class Element {
+class DragElement {
     constructor(element, name) {
         this.name = name;
         this.x = 0;
         this.y = 0;
-        this.color = "#ffffff";
-        this.width = 20;
-        this.height = 20;
+        this.color = "#2980c1";
+        this.width = element.clientWidth;
+        this.height = element.clientHeight;
         this.listDOM = this.createListItem();
-        this.elementDOM = element;
+        this.elementDOM = element.cloneNode(true);
+        this.type = this.elementDOM.getAttribute("data-type");
 
         this.elementDOM.setAttribute("data-index", elements.length);
+        canvasDOM.appendChild(this.elementDOM);
+        elements.push(this);
     }
 
     copy() {
-        const el = new Element(
+        const el = new DragElement(
             this.elementDOM.cloneNode(true),
             this.name + " clone"
         );
@@ -43,9 +45,9 @@ class Element {
         el.setWidth(this.width);
         el.setHeight(this.height);
         el.setColor(this.color);
-        el.setAttribute("data-index", elements.length);
 
         canvasDOM.appendChild(el.getElement());
+        elements.push(this);
 
         return el;
     }
@@ -78,6 +80,10 @@ class Element {
         return this.color;
     }
 
+    getType() {
+        return this.type;
+    }
+
     createListItem() {
         const listElement = document.createElement("li");
         listElement.className = "list-item list-item-square";
@@ -103,14 +109,12 @@ class Element {
 
     setX(x) {
         this.x = x;
-        this.elementDOM.setAttribute("data-x", x);
         this.updatePosition();
         updateElementValues();
     }
 
     setY(y) {
         this.y = y;
-        this.elementDOM.setAttribute("data-y", y);
         this.updatePosition();
         updateElementValues();
     }
@@ -138,6 +142,46 @@ class Element {
             "translate(" + this.x + "px, " + this.y + "px)";
     }
 
+    restrictX(x) {
+        if (x < 0) {
+            x = 0;
+        } else if (x + this.width > canvasDOM.clientWidth) {
+            x = canvasDOM.clientWidth - this.width;
+        }
+
+        this.setX(x);
+    }
+
+    restrictY(y) {
+        if (y < 0) {
+            y = 0;
+        } else if (y + this.height > canvasDOM.clientHeight) {
+            y = canvasDOM.clientHeight - this.height;
+        }
+
+        this.setY(y);
+    }
+
+    restrictWidth(width) {
+        if (width < 1) {
+            width = 1;
+        } else if (width + this.x > canvasDOM.clientWidth) {
+            width = canvasDOM.clientWidth - this.x;
+        }
+
+        this.setWidth(width);
+    }
+
+    restrictHeight(height) {
+        if (height < 1) {
+            height = 1;
+        } else if (height + this.y > canvasDOM.clientHeight) {
+            height = canvasDOM.clientHeight - this.y;
+        }
+
+        this.setHeight(height);
+    }
+
     destroy() {
         elements[this.elementDOM.getAttribute("data-index")] = null;
         this.listDOM.remove();
@@ -147,11 +191,20 @@ class Element {
 
 // Functions
 const generateCode = () => {
-    let code = "body {\n    background-color: ";
+    let code = "body {\n    background: ";
 
-    elements.forEach((element) => {
-        if (true) {
-            code += `linear-gradient() 0px 0px/0px 0px, `;
+    let codeElements = elements;
+    codeElements.reverse();
+
+    codeElements.forEach((element) => {
+        if (element.getType() == "rect") {
+            code += `linear-gradient(to bottom, ${element.getColor()}, ${element.getColor()}) ${element.getX()}px ${element.getY()}px/${element.getWidth()}px ${element.getHeight()}px no-repeat, `;
+        } else if (element.getType() == "circle") {
+            code += `radial-gradient(${element.getColor()} ${
+                element.getWidth() / 2
+            }px, transparent ${
+                element.getWidth() / 2
+            }px) ${element.getX()}px ${element.getY()}px/${element.getWidth()}px ${element.getHeight()}px no-repeat, `;
         }
     });
 
@@ -190,119 +243,227 @@ const changeSelectedElement = (newElement) => {
 
 const updateElementValues = () => {
     // Set values
-    /*elementXInputDOM.value = selectedElement.getX();
-    elementYInputDOM.value = selectedElement.getY();
-    elementWidthInputDOM.value = selectedElement.getWidth();
-    elementHeightInputDOM.value = selectedElement.getHeight();
-    elementColorInputDOM.value = selectedElement.getColor();*/
+    if (selectedElement != undefined) {
+        elementXInputDOM.value = selectedElement.getX();
+        elementYInputDOM.value = selectedElement.getY();
+        elementWidthInputDOM.value = selectedElement.getWidth();
+        elementHeightInputDOM.value = selectedElement.getHeight();
+        elementColorInputDOM.value = selectedElement.getColor();
+    }
 };
 
-const moveListener = (event) => {
-    if (event.interaction.pointerIsDown && !event.interaction.interacting()) {
-        if (event.currentTarget.style.cursor === "") {
-            let el = event.currentTarget.cloneNode(true);
-            canvasDOM.appendChild(el);
+// Interaction
+let dragging = undefined;
+let dragType = "";
+let mouseOffsetX = 0;
+let mouseOffsetY = 0;
+let dragOriginalX = 0;
+let dragOriginalY = 0;
+let dragOriginalWidth = 0;
+let dragOriginalHeight = 0;
 
-            let element = new Element(el, "Element");
-            changeSelectedElement(element, "Element");
+creationElementsDOM.addEventListener("mousedown", (event) => {
+    if (
+        dragging == undefined &&
+        event.target.classList.contains("creation-element")
+    ) {
+        let el = new DragElement(event.target, "Element");
 
-            let x =
-                event.clientX -
-                event.currentTarget.clientWidth / 2 -
-                canvasDOM.getBoundingClientRect().left;
-            let y =
-                event.clientY -
-                canvasDOM.getBoundingClientRect().top -
-                event.currentTarget.clientHeight / 2;
+        dragging = el;
+        changeSelectedElement(el);
 
-            element.setX(x);
-            element.setY(y);
+        dragType = "move";
+        mouseOffsetX =
+            event.clientX - event.target.getBoundingClientRect().left;
+        mouseOffsetY = event.clientY - event.target.getBoundingClientRect().top;
 
-            elements.push(element);
+        el.restrictX(
+            event.clientX -
+                mouseOffsetX -
+                canvasDOM.getBoundingClientRect().left
+        );
+        el.restrictY(
+            event.clientY - mouseOffsetY - canvasDOM.getBoundingClientRect().top
+        );
+    }
+});
 
-            event.interaction.start({ name: "drag" }, event.interactable, el);
+canvasDOM.addEventListener("mousemove", (event) => {
+    // Change cursor
+    if (
+        event.target.classList.contains("creation-element") &&
+        dragging == undefined
+    ) {
+        let box = event.target.getBoundingClientRect();
+        let edgeSize = 10;
+        let edge = 0;
+
+        // West
+        if (event.clientX >= box.left && event.clientX <= box.left + edgeSize) {
+            edge = 1;
+            event.target.style.cursor = "w-resize";
+        }
+        // East
+        else if (
+            event.clientX <= box.right &&
+            event.clientX >= box.right - edgeSize
+        ) {
+            edge = 2;
+            event.target.style.cursor = "e-resize";
+        }
+
+        if (event.clientY >= box.top && event.clientY <= box.top + edgeSize) {
+            if (edge == 1) {
+                // North west
+                event.target.style.cursor = "nw-resize";
+            } else if (edge == 2) {
+                // North east
+                event.target.style.cursor = "ne-resize";
+            } else {
+                // North
+                event.target.style.cursor = "n-resize";
+            }
+            edge = 3;
+        } else if (
+            event.clientY <= box.bottom &&
+            event.clientY >= box.bottom - edgeSize
+        ) {
+            if (edge == 1) {
+                // South west
+                event.target.style.cursor = "sw-resize";
+            } else if (edge == 2) {
+                // South east
+                event.target.style.cursor = "se-resize";
+            } else {
+                // South
+                event.target.style.cursor = "s-resize";
+            }
+            edge = 3;
+        }
+
+        if (edge == 0) {
+            event.target.style.cursor = "move";
         }
     }
+});
+
+const resizeEast = (event) => {
+    dragging.restrictWidth(
+        event.clientX -
+            canvasDOM.getBoundingClientRect().left -
+            dragging.getX() +
+            (dragOriginalWidth - mouseOffsetX)
+    );
 };
 
-const dragMoveListener = (event) => {
-    if (!isNaN(event.dx) && !isNaN(event.dy)) {
-        let el = elements[parseInt(event.target.getAttribute("data-index"))];
+const resizeSouth = (event) => {
+    dragging.restrictHeight(
+        event.clientY -
+            canvasDOM.getBoundingClientRect().top -
+            dragging.getY() +
+            (dragOriginalHeight - mouseOffsetY)
+    );
+};
 
-        let x = (parseFloat(el.getX()) || 0) + event.dx;
-        let y = (parseFloat(el.getY()) || 0) + event.dy;
+const resizeWest = (event) => {
+    dragging.restrictX(
+        event.clientX - canvasDOM.getBoundingClientRect().left - mouseOffsetX
+    );
+    dragging.restrictWidth(
+        dragOriginalX -
+            (event.clientX - canvasDOM.getBoundingClientRect().left) +
+            dragOriginalWidth +
+            mouseOffsetX
+    );
+};
 
-        el.setX(x);
-        el.setY(y);
+const resizeNorth = (event) => {
+    dragging.restrictY(
+        event.clientY - canvasDOM.getBoundingClientRect().top - mouseOffsetY
+    );
+    dragging.restrictHeight(
+        dragOriginalY -
+            (event.clientY - canvasDOM.getBoundingClientRect().top) +
+            dragOriginalHeight +
+            mouseOffsetY
+    );
+};
+
+document.body.addEventListener("mousemove", (event) => {
+    if (dragging != undefined) {
+        switch (dragType) {
+            case "move":
+                dragging.restrictX(
+                    event.clientX -
+                        mouseOffsetX -
+                        canvasDOM.getBoundingClientRect().left
+                );
+                dragging.restrictY(
+                    event.clientY -
+                        mouseOffsetY -
+                        canvasDOM.getBoundingClientRect().top
+                );
+                break;
+
+            case "n-resize":
+                resizeNorth(event);
+                break;
+
+            case "s-resize":
+                resizeSouth(event);
+                break;
+
+            case "e-resize":
+                resizeEast(event);
+                break;
+
+            case "w-resize":
+                resizeWest(event);
+                break;
+
+            case "sw-resize":
+                resizeSouth(event);
+                resizeWest(event);
+                break;
+
+            case "se-resize":
+                resizeSouth(event);
+                resizeEast(event);
+                break;
+
+            case "nw-resize":
+                resizeNorth(event);
+                resizeWest(event);
+                break;
+
+            case "ne-resize":
+                resizeNorth(event);
+                resizeEast(event);
+                break;
+        }
     }
-};
+});
 
-const resizeMoveListener = (event) => {
-    let el = elements[parseInt(event.target.getAttribute("data-index"))];
-
-    let x = parseFloat(el.getX()) || 0;
-    let y = parseFloat(el.getY()) || 0;
-
-    el.setWidth(event.rect.width);
-    el.setHeight(event.rect.height);
-
-    el.setX(x + event.deltaRect.left);
-    el.setY(y + event.deltaRect.top);
-};
-
-// Creation elements
-interact("#creation-elements .creation-element")
-    .draggable({
-        listeners: {
-            move: dragMoveListener,
-        },
-        manualStart: true,
-        inertia: false,
-        modifiers: [
-            interact.modifiers.restrict({
-                restriction: "#canvas",
-                elementRect: { top: 0, left: 0, bottom: 1, right: 1 },
-                endOnly: false,
-            }),
-        ],
-    })
-    .on("move", moveListener);
-
-// Canvas element control
-interact("#canvas .creation-element")
-    .resizable({
-        edges: { left: true, right: true, bottom: true, top: true },
-
-        listeners: {
-            move: resizeMoveListener,
-        },
-        modifiers: [
-            interact.modifiers.restrictEdges({
-                outer: "#canvas",
-            }),
-        ],
-        inertia: false,
-    })
-    .draggable({
-        listeners: {
-            move: dragMoveListener,
-        },
-        inertia: false,
-        modifiers: [
-            interact.modifiers.restrict({
-                restriction: "#canvas",
-                elementRect: { top: 0, left: 0, bottom: 1, right: 1 },
-                endOnly: false,
-            }),
-        ],
-    });
+document.body.addEventListener("mouseup", (event) => {
+    dragging = undefined;
+});
 
 // Event listeners
-canvasDOM.addEventListener("click", (event) => {
-    if (event.target !== canvasDOM) {
-        changeSelectedElement(
-            elements[parseInt(event.target.getAttribute("data-index"))]
-        );
+canvasDOM.addEventListener("mousedown", (event) => {
+    if (event.target !== canvasDOM && dragging == undefined) {
+        let el = elements[parseInt(event.target.getAttribute("data-index"))];
+        dragging = el;
+
+        dragType = event.target.style.cursor;
+        mouseOffsetX =
+            event.clientX - event.target.getBoundingClientRect().left;
+        mouseOffsetY = event.clientY - event.target.getBoundingClientRect().top;
+        dragOriginalWidth = el.getWidth();
+        dragOriginalHeight = el.getHeight();
+        dragOriginalX = el.getX();
+        dragOriginalY = el.getY();
+
+        changeSelectedElement(el);
     } else {
         changeSelectedElement(undefined);
     }
@@ -363,35 +524,35 @@ document.addEventListener("keyup", (event) => {
 codeGenerateDOM.addEventListener("click", generateCode);
 
 // Element X
-elementXInputDOM.addEventListener("change", (event) => {
+elementXInputDOM.addEventListener("input", (event) => {
     if (selectedElement) {
-        selectedElement.setX(event.target.value);
+        selectedElement.restrictX(parseInt(event.target.value));
     }
 });
 
 // Element Y
-elementYInputDOM.addEventListener("change", (event) => {
+elementYInputDOM.addEventListener("input", (event) => {
     if (selectedElement) {
-        selectedElement.setY(event.target.value);
+        selectedElement.restrictY(parseInt(event.target.value));
     }
 });
 
 // Element Width
-elementWidthInputDOM.addEventListener("change", (event) => {
+elementWidthInputDOM.addEventListener("input", (event) => {
     if (selectedElement) {
-        selectedElement.setWidth(event.target.value);
+        selectedElement.setWidth(parseInt(event.target.value));
     }
 });
 
 // Element height
-elementHeightInputDOM.addEventListener("change", (event) => {
+elementHeightInputDOM.addEventListener("input", (event) => {
     if (selectedElement) {
-        selectedElement.setHeight(event.target.value);
+        selectedElement.setHeight(parseInt(event.target.value));
     }
 });
 
 // Element color
-elementColorInputDOM.addEventListener("change", (event) => {
+elementColorInputDOM.addEventListener("input", (event) => {
     if (selectedElement) {
         selectedElement.setColor(event.target.value);
     }
