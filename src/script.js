@@ -52,9 +52,6 @@ class DragElement {
         el.setHeight(this.height);
         el.setColor(this.color);
 
-        canvasDOM.appendChild(el.getElement());
-        elements.push(this);
-
         return el;
     }
 
@@ -122,6 +119,11 @@ class DragElement {
         });
 
         return listElement;
+    }
+
+    setIndex(index) {
+        this.index = index;
+        this.elementDOM.setAttribute("data-index", this.index);
     }
 
     setName(name) {
@@ -228,7 +230,19 @@ class DragElement {
     }
 
     destroy() {
-        elements[this.elementDOM.getAttribute("data-index")] = null;
+        elements.splice(this.index, 1);
+        console.log(elements);
+
+        for (let i = 0; i < elements.length; i++) {
+            let el = elements[i];
+            if (el.getSortingPos() > this.sortingPos) {
+                el.sortingPos--;
+                el.elementDOM.style.zIndex = el.sortingPos;
+            }
+
+            el.setIndex(i);
+        }
+
         this.listDOM.remove();
         this.elementDOM.remove();
     }
@@ -581,7 +595,7 @@ document.addEventListener("keydown", (event) => {
         case "Delete":
             if (selectedElement) {
                 selectedElement.destroy();
-                selectedElement = undefined;
+                changeSelectedElement(undefined);
             }
             break;
 
@@ -605,7 +619,6 @@ document.addEventListener("keydown", (event) => {
         case "v":
             if (event.ctrlKey && clipboard) {
                 let clippedElement = clipboard.copy();
-                elements.push(clippedElement);
 
                 changeSelectedElement(clippedElement);
             }
