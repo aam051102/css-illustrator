@@ -463,7 +463,11 @@ creationElementsDOM.addEventListener("mousedown", (event) => {
         dragging = el;
         changeSelectedElement(el);
 
-        if (el.getType() == "triangle" && !sentTriangleWarning) {
+        if (
+            parseInt(codeTypeDOM.value) == 0 &&
+            el.getType() == "triangle" &&
+            !sentTriangleWarning
+        ) {
             halfmoon.initStickyAlert({
                 content:
                     "Please see the browser support for conic-gradient() before using triangles in production.",
