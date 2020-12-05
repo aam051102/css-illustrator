@@ -259,19 +259,40 @@ const generateCode = () => {
         let sortingPos = element.getSortingPos();
 
         if (element.getType() == "rect") {
+            // Rectangle
             codeElements[
                 sortingPos
             ] = `linear-gradient(0deg, ${element.getColor()}, ${element.getColor()}) ${element.getX()}px ${element.getY()}px/${element.getWidth()}px ${element.getHeight()}px no-repeat, `;
         } else if (element.getType() == "circle") {
+            // Circle
             codeElements[sortingPos] = `radial-gradient(${element.getColor()} ${
                 element.getWidth() / 2
             }px, transparent ${
                 element.getWidth() / 2
             }px) ${element.getX()}px ${element.getY()}px/${element.getWidth()}px ${element.getHeight()}px no-repeat, `;
         } else if (element.getType() == "triangle") {
+            /// Triangle
+            // Get leg length
+            let legLength = Math.sqrt(
+                Math.pow(element.getHeight(), 2) +
+                    Math.pow(element.getWidth() / 2, 2)
+            );
+
+            // Get COS(angle)
+            let angleCos =
+                (Math.pow(legLength, 2) +
+                    Math.pow(legLength, 2) -
+                    Math.pow(element.getWidth(), 2)) /
+                (2 * legLength * legLength);
+
+            // Get angle
+            let angle = Math.acos(angleCos) * (180 / Math.PI);
+
+            let startDeg = 180 - angle / 2;
+
             codeElements[
                 sortingPos
-            ] = `conic-gradient(transparent ${30}deg, ${element.getColor()} 0deg ${40}deg, transparent 0deg) ${element.getX()}px ${element.getY()}px/${element.getWidth()}px ${element.getHeight()}px no-repeat, `;
+            ] = `conic-gradient(from ${startDeg}deg at 50% 0%, transparent 0deg, ${element.getColor()} 0deg ${angle}deg, transparent 0deg) ${element.getX()}px ${element.getY()}px/${element.getWidth()}px ${element.getHeight()}px no-repeat, `;
         }
     });
 
