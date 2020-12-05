@@ -3,9 +3,10 @@ let clipboard = undefined;
 let shiftHeld = false;
 let elements = [];
 let outputTypes = [
-    // CSS Gradient
+    // CSS Gradients
     () => {
-        let code = "body {\n    background: ";
+        let code = `/* CSS Gradients */\n`;
+        code += `body {\n    background: `;
 
         let codeElements = [];
         codeElements.length = elements.length;
@@ -61,59 +62,37 @@ let outputTypes = [
 
         return code;
     },
-    // CSS/HTML mix
+    // Separated Inline CSS
     () => {
-        let code = "";
+        let code = `<!-- Separated Inline CSS -->\n`;
+        code += `<div style="position: relative;">`;
 
         let codeElements = [];
         codeElements.length = elements.length;
 
         elements.forEach((element) => {
             let sortingPos = element.getSortingPos();
+            let codeElement = "";
 
             if (element.getType() == "rect") {
                 // Rectangle
-                codeElements[
-                    sortingPos
-                ] = `linear-gradient(0deg, ${element.getColor()}, ${element.getColor()}) ${element.getX()}px ${element.getY()}px/${element.getWidth()}px ${element.getHeight()}px no-repeat, `;
+                codeElement = `<div style="background: ${element.getColor()}; position: absolute; left: ${element.getX()}px; top: ${element.getY()}px; width: ${element.getWidth()}px; height: ${element.getHeight()}px;"></div>`;
             } else if (element.getType() == "circle") {
                 // Circle
-                codeElements[
-                    sortingPos
-                ] = `radial-gradient(${element.getColor()} ${
-                    element.getWidth() / 2
-                }px, transparent ${
-                    element.getWidth() / 2
-                }px) ${element.getX()}px ${element.getY()}px/${element.getWidth()}px ${element.getHeight()}px no-repeat, `;
+                codeElement = `<div style="background: ${element.getColor()}; position: absolute; left: ${element.getX()}px; top: ${element.getY()}px; width: ${element.getWidth()}px; height: ${element.getHeight()}px; border-radius: 100%;"></div>`;
             } else if (element.getType() == "triangle") {
                 /// Triangle
-                // Get leg length
-                let legLength = Math.sqrt(
-                    Math.pow(element.getHeight(), 2) +
-                        Math.pow(element.getWidth() / 2, 2)
-                );
-
-                // Get COS(angle)
-                let angleCos =
-                    (Math.pow(legLength, 2) +
-                        Math.pow(legLength, 2) -
-                        Math.pow(element.getWidth(), 2)) /
-                    (2 * legLength * legLength);
-
-                // Get angle
-                let angle = Math.acos(angleCos) * (180 / Math.PI);
-
-                let startDeg = 180 - angle / 2;
-
-                codeElements[
-                    sortingPos
-                ] = `conic-gradient(from ${startDeg}deg at 50% 0%, transparent 0deg, ${element.getColor()} 0deg ${angle}deg, transparent 0deg) ${element.getX()}px ${element.getY()}px/${element.getWidth()}px ${element.getHeight()}px no-repeat, `;
+                codeElement = `<div style="background: ${element.getColor()}; position: absolute; left: ${element.getX()}px; top: ${element.getY()}px; width: ${element.getWidth()}px; height: ${element.getHeight()}px; clip-path: polygon(50% 0%, 100% 100%, 0% 100%);"></div>`;
             }
+
+            codeElements[sortingPos] = codeElement;
         });
 
         for (let i = codeElements.length - 1; i >= 0; i--) {
             code += codeElements[i];
         }
+
+        code += `</div>`;
 
         return code;
     },
