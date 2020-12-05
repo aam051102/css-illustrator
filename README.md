@@ -39,3 +39,7 @@ Hosts a version of the build with watched files on localhost:8080.
 -   gulp-htmlmin
 -   gulp-minify
 -   gulp-rename
+
+## License
+
+This project is licensed under the terms of the MIT license.
