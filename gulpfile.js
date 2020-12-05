@@ -31,7 +31,28 @@ const css = (next) => {
 
 const html = (next) => {
     gulp.src("./src/**/*.html")
-        .pipe(htmlmin({ collapseWhitespace: true, removeComments: true }))
+        .pipe(
+            htmlmin({
+                collapseWhitespace: true,
+                removeComments: true,
+                collapseInlineTagWhitespace: true,
+                removeTagWhitespace: true,
+            })
+        )
+        .pipe(gulp.dest("./dist"))
+        .pipe(connect.reload());
+
+    next();
+};
+
+const images = (next) => {
+    gulp.src("./src/**/*.png").pipe(gulp.dest("./dist")).pipe(connect.reload());
+
+    next();
+};
+
+const public = (next) => {
+    gulp.src("./public/**/*.*")
         .pipe(gulp.dest("./dist"))
         .pipe(connect.reload());
 
@@ -50,10 +71,20 @@ function watchJs() {
     gulp.watch("./src/**/*.js", { ignoreInitial: false }, js);
 }
 
+function watchImages() {
+    gulp.watch("./src/**/*.png", { ignoreInitial: false }, images);
+}
+
+function watchPublic() {
+    gulp.watch("./public/**/*.*", { ignoreInitial: false }, public);
+}
+
 gulp.task("dev", function (next) {
     watchHtml();
     watchCss();
     watchJs();
+    watchImages();
+    watchPublic();
 
     connect.server({
         livereload: true,
@@ -67,6 +98,8 @@ gulp.task("build", function (next) {
     js(next);
     css(next);
     html(next);
+    images(next);
+    public(next);
 
     next();
 });

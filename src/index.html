@@ -9,10 +9,11 @@
             name="viewport"
         />
         <meta name="viewport" content="width=device-width" />
+        <link rel="manifest" href="./manifest.json" />
 
         <!-- Favicon and title -->
         <link rel="icon" href="./fav.png" />
-        <title>CSS Image Builder</title>
+        <title>CSS Illustrator</title>
 
         <!-- Halfmoon CSS -->
         <link
@@ -45,6 +46,9 @@
                         ></textarea>
                     </div>
                     <div class="text-right mt-20">
+                        <button id="copy-code" class="btn btn-primary mr-5">
+                            Copy
+                        </button>
                         <a href="#" class="btn mr-5" role="button">Close</a>
                     </div>
                 </div>
@@ -79,9 +83,10 @@
                         class="creation-element creation-element-square"
                         data-type="rect"
                     ></div>
-                    <!--<div
+                    <div
                         class="creation-element creation-element-triangle"
-                    ></div>-->
+                        data-type="triangle"
+                    ></div>
                 </div>
             </nav>
             <!-- Navbar end -->
@@ -155,7 +160,19 @@
 
                 <!-- Elements start -->
                 <section class="border-top pt-20 mt-20">
-                    <h2 class="content-title">Elements</h2>
+                    <section class="d-flex justify-content-between">
+                        <h2 class="content-title">Hierarchy</h2>
+
+                        <div>
+                            <button class="btn element-list-up-btn mr-5">
+                                &#x2191;
+                            </button>
+                            <button class="btn element-list-down-btn mr-5">
+                                &#x2193;
+                            </button>
+                        </div>
+                    </section>
+
                     <ul class="list" id="element-list"></ul>
                 </section>
                 <!-- Elements end -->
@@ -164,6 +181,8 @@
 
             <!-- Content wrapper start -->
             <div class="content-wrapper overflow-hidden">
+                <div class="sticky-alerts"></div>
+
                 <section id="canvas"></section>
             </div>
             <!-- Content wrapper end -->
@@ -172,6 +191,14 @@
 
         <!-- JS -->
         <script src="https://cdn.jsdelivr.net/npm/halfmoon@1.1.1/js/halfmoon.min.js"></script>
+        <script>
+            if (
+                "serviceWorker" in navigator &&
+                window.location.hostname != "localhost"
+            ) {
+                navigator.serviceWorker.register("./sw.js");
+            }
+        </script>
         <script src="./script.js"></script>
     </body>
 </html>

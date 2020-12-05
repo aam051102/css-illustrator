@@ -55,3 +55,31 @@ body {
     padding: 0;
     margin: 0;
 }
+
+.list-item .btn {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+}
+
+.list-item-title {
+    margin: 0;
+    width: 100%;
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    padding-right: 2ch;
+}
+
+.list-item-drag {
+    color: #777777;
+    display: none;
+}
+
+.list-item .btn:hover .list-item-drag {
+    display: block;
+}
+
+.list-item-drag:hover {
+    cursor: move;
+}

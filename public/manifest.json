@@ -1,0 +1,18 @@
+{
+    "name": "CSS Illustrator",
+    "short_name": "CSS Illustrator",
+    "description": "A simple tool for creating CSS illustrations.",
+    "start_url": "/",
+    "display": "standalone",
+    "background_color": "#ffffff",
+    "theme_color": "#2980c1",
+    "homepage_url": "",
+    "icons": [
+        {
+            "src": "./fav.png",
+            "sizes": "512x512",
+            "type": "image/png",
+            "purpose": "any maskable"
+        }
+    ]
+}

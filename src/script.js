@@ -9,6 +9,9 @@ const codeOutputDOM = document.querySelector("#code-output");
 const codeGenerateDOM = document.querySelector("#code-generate");
 const elementListDOM = document.querySelector("#element-list");
 const creationElementsDOM = document.querySelector("#creation-elements");
+const copyCodeDOM = document.querySelector("#copy-code");
+const elementListUpBtnDOM = document.querySelector(".element-list-up-btn");
+const elementListDownBtnDOM = document.querySelector(".element-list-down-btn");
 
 const elementXInputDOM = document.querySelector("#element-x");
 const elementYInputDOM = document.querySelector("#element-y");
@@ -19,6 +22,8 @@ const elementColorInputDOM = document.querySelector("#element-color");
 // Classes
 class DragElement {
     constructor(element, name) {
+        this.index = elements.length;
+        this.sortingPos = this.index;
         this.name = name;
         this.x = 0;
         this.y = 0;
@@ -29,7 +34,8 @@ class DragElement {
         this.elementDOM = element.cloneNode(true);
         this.type = this.elementDOM.getAttribute("data-type");
 
-        this.elementDOM.setAttribute("data-index", elements.length);
+        this.elementDOM.setAttribute("data-index", this.index);
+        this.elementDOM.style.zIndex = this.sortingPos;
         canvasDOM.appendChild(this.elementDOM);
         elements.push(this);
     }
@@ -54,6 +60,10 @@ class DragElement {
 
     getElement() {
         return this.elementDOM;
+    }
+
+    getSortingPos() {
+        return this.sortingPos;
     }
 
     getName() {
@@ -90,7 +100,12 @@ class DragElement {
 
         const buttonElement = document.createElement("button");
         buttonElement.className = "btn btn-block text-justify";
-        buttonElement.textContent = this.name;
+
+        const textElement = document.createElement("p");
+        textElement.className = "list-item-title";
+        textElement.textContent = this.name;
+
+        buttonElement.appendChild(textElement);
 
         listElement.appendChild(buttonElement);
         elementListDOM.appendChild(listElement);
@@ -117,6 +132,17 @@ class DragElement {
         this.y = y;
         this.updatePosition();
         updateElementValues();
+    }
+
+    setSortingPos(sortingPos) {
+        if (sortingPos < 0) {
+            sortingPos = 0;
+        } else if (sortingPos >= elements.length) {
+            sortingPos = elements.length - 1;
+        }
+
+        this.sortingPos = sortingPos;
+        this.elementDOM.style.zIndex = this.sortingPos;
     }
 
     setWidth(width) {
@@ -193,20 +219,32 @@ class DragElement {
 const generateCode = () => {
     let code = "body {\n    background: ";
 
-    let codeElements = elements;
-    codeElements.reverse();
+    let codeElements = [];
+    codeElements.length = elements.length;
 
-    codeElements.forEach((element) => {
+    elements.forEach((element) => {
+        let sortingPos = element.getSortingPos();
+
         if (element.getType() == "rect") {
-            code += `linear-gradient(to bottom, ${element.getColor()}, ${element.getColor()}) ${element.getX()}px ${element.getY()}px/${element.getWidth()}px ${element.getHeight()}px no-repeat, `;
+            codeElements[
+                sortingPos
+            ] = `linear-gradient(0deg, ${element.getColor()}, ${element.getColor()}) ${element.getX()}px ${element.getY()}px/${element.getWidth()}px ${element.getHeight()}px no-repeat, `;
         } else if (element.getType() == "circle") {
-            code += `radial-gradient(${element.getColor()} ${
+            codeElements[sortingPos] = `radial-gradient(${element.getColor()} ${
                 element.getWidth() / 2
             }px, transparent ${
                 element.getWidth() / 2
             }px) ${element.getX()}px ${element.getY()}px/${element.getWidth()}px ${element.getHeight()}px no-repeat, `;
+        } else if (element.getType() == "triangle") {
+            codeElements[
+                sortingPos
+            ] = `conic-gradient(transparent ${30}deg, ${element.getColor()} 0deg ${40}deg, transparent 0deg) ${element.getX()}px ${element.getY()}px/${element.getWidth()}px ${element.getHeight()}px no-repeat, `;
         }
     });
+
+    for (let i = codeElements.length - 1; i >= 0; i--) {
+        code += codeElements[i];
+    }
 
     code += "transparent;\n}";
 
@@ -252,6 +290,48 @@ const updateElementValues = () => {
     }
 };
 
+const resizeEast = (event) => {
+    dragging.restrictWidth(
+        event.clientX -
+            canvasDOM.getBoundingClientRect().left -
+            dragging.getX() +
+            (dragOriginalWidth - mouseOffsetX)
+    );
+};
+
+const resizeSouth = (event) => {
+    dragging.restrictHeight(
+        event.clientY -
+            canvasDOM.getBoundingClientRect().top -
+            dragging.getY() +
+            (dragOriginalHeight - mouseOffsetY)
+    );
+};
+
+const resizeWest = (event) => {
+    dragging.restrictX(
+        event.clientX - canvasDOM.getBoundingClientRect().left - mouseOffsetX
+    );
+    dragging.restrictWidth(
+        dragOriginalX -
+            (event.clientX - canvasDOM.getBoundingClientRect().left) +
+            dragOriginalWidth +
+            mouseOffsetX
+    );
+};
+
+const resizeNorth = (event) => {
+    dragging.restrictY(
+        event.clientY - canvasDOM.getBoundingClientRect().top - mouseOffsetY
+    );
+    dragging.restrictHeight(
+        dragOriginalY -
+            (event.clientY - canvasDOM.getBoundingClientRect().top) +
+            dragOriginalHeight +
+            mouseOffsetY
+    );
+};
+
 // Interaction
 let dragging = undefined;
 let dragType = "";
@@ -261,6 +341,7 @@ let dragOriginalX = 0;
 let dragOriginalY = 0;
 let dragOriginalWidth = 0;
 let dragOriginalHeight = 0;
+let sentTriangleWarning = false;
 
 creationElementsDOM.addEventListener("mousedown", (event) => {
     if (
@@ -271,6 +352,15 @@ creationElementsDOM.addEventListener("mousedown", (event) => {
 
         dragging = el;
         changeSelectedElement(el);
+
+        if (el.getType() == "triangle" && !sentTriangleWarning) {
+            halfmoon.initStickyAlert({
+                content:
+                    "Please see the browser support for conic-gradient() before using triangles in production.",
+                title: "Warning",
+            });
+            sentTriangleWarning = true;
+        }
 
         dragType = "move";
         mouseOffsetX =
@@ -347,48 +437,6 @@ canvasDOM.addEventListener("mousemove", (event) => {
     }
 });
 
-const resizeEast = (event) => {
-    dragging.restrictWidth(
-        event.clientX -
-            canvasDOM.getBoundingClientRect().left -
-            dragging.getX() +
-            (dragOriginalWidth - mouseOffsetX)
-    );
-};
-
-const resizeSouth = (event) => {
-    dragging.restrictHeight(
-        event.clientY -
-            canvasDOM.getBoundingClientRect().top -
-            dragging.getY() +
-            (dragOriginalHeight - mouseOffsetY)
-    );
-};
-
-const resizeWest = (event) => {
-    dragging.restrictX(
-        event.clientX - canvasDOM.getBoundingClientRect().left - mouseOffsetX
-    );
-    dragging.restrictWidth(
-        dragOriginalX -
-            (event.clientX - canvasDOM.getBoundingClientRect().left) +
-            dragOriginalWidth +
-            mouseOffsetX
-    );
-};
-
-const resizeNorth = (event) => {
-    dragging.restrictY(
-        event.clientY - canvasDOM.getBoundingClientRect().top - mouseOffsetY
-    );
-    dragging.restrictHeight(
-        dragOriginalY -
-            (event.clientY - canvasDOM.getBoundingClientRect().top) +
-            dragOriginalHeight +
-            mouseOffsetY
-    );
-};
-
 document.body.addEventListener("mousemove", (event) => {
     if (dragging != undefined) {
         switch (dragType) {
@@ -444,8 +492,44 @@ document.body.addEventListener("mousemove", (event) => {
     }
 });
 
-document.body.addEventListener("mouseup", (event) => {
+window.addEventListener("mouseup", (event) => {
     dragging = undefined;
+});
+
+// List movement
+// Move up
+elementListUpBtnDOM.addEventListener("click", () => {
+    let el;
+    if (selectedElement) el = selectedElement.listDOM;
+
+    if (el && el.previousElementSibling) {
+        // Move element
+        elementListDOM.insertBefore(el, el.previousElementSibling);
+
+        // Move sorting position
+        selectedElement.setSortingPos(selectedElement.getSortingPos() - 1);
+    }
+});
+
+// Move down
+elementListDownBtnDOM.addEventListener("click", () => {
+    let el;
+    if (selectedElement) el = selectedElement.listDOM;
+
+    if (el) {
+        // Move element
+        if (el.nextElementSibling && el.nextElementSibling.nextElementSibling) {
+            elementListDOM.insertBefore(
+                el,
+                el.nextElementSibling.nextElementSibling
+            );
+        } else {
+            elementListDOM.appendChild(el);
+        }
+
+        // Move sorting position
+        selectedElement.setSortingPos(selectedElement.getSortingPos() + 1);
+    }
 });
 
 // Event listeners
@@ -488,6 +572,7 @@ document.addEventListener("keydown", (event) => {
         case "c":
             if (
                 event.ctrlKey &&
+                selectedElement &&
                 selectedElement.getElement().parentNode === canvasDOM
             ) {
                 clipboard = selectedElement;
@@ -519,6 +604,11 @@ document.addEventListener("keyup", (event) => {
         default:
             break;
     }
+});
+
+copyCodeDOM.addEventListener("click", () => {
+    codeOutputDOM.select();
+    document.execCommand("copy");
 });
 
 codeGenerateDOM.addEventListener("click", generateCode);
