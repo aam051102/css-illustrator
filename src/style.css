@@ -47,13 +47,17 @@ body {
 
 #canvas .creation-element.selected {
     border: 1px dashed #0009;
-    z-index: 90;
 }
 
 .list {
     list-style: none;
     padding: 0;
     margin: 0;
+}
+
+.list-item.selected .btn {
+    box-shadow: var(--dm-button-box-shadow-focus);
+    border-color: var(--dm-button-border-color-focus);
 }
 
 .list-item .btn {
@@ -82,4 +86,8 @@ body {
 
 .list-item-drag:hover {
     cursor: move;
+}
+
+.modal {
+    z-index: 99999;
 }

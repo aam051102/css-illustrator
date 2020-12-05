@@ -106,9 +106,16 @@ class DragElement {
         textElement.textContent = this.name;
 
         buttonElement.appendChild(textElement);
-
         listElement.appendChild(buttonElement);
-        elementListDOM.appendChild(listElement);
+
+        if (elementListDOM.children.length > 0) {
+            elementListDOM.insertBefore(
+                listElement,
+                elementListDOM.children[0]
+            );
+        } else {
+            elementListDOM.appendChild(listElement);
+        }
 
         buttonElement.addEventListener("click", () => {
             changeSelectedElement(this);
@@ -135,6 +142,8 @@ class DragElement {
     }
 
     setSortingPos(sortingPos) {
+        let previousSortingPos = this.sortingPos;
+
         if (sortingPos < 0) {
             sortingPos = 0;
         } else if (sortingPos >= elements.length) {
@@ -143,6 +152,16 @@ class DragElement {
 
         this.sortingPos = sortingPos;
         this.elementDOM.style.zIndex = this.sortingPos;
+
+        // Resort other elements
+        for (let i = 0; i < elements.length; i++) {
+            let el = elements[i];
+            if (i != this.index && el.sortingPos == this.sortingPos) {
+                el.sortingPos = previousSortingPos;
+                el.elementDOM.style.zIndex = el.sortingPos;
+                break;
+            }
+        }
     }
 
     setWidth(width) {
@@ -253,13 +272,16 @@ const generateCode = () => {
 
 const changeSelectedElement = (newElement) => {
     // Change selected element
-    if (selectedElement)
+    if (selectedElement) {
         selectedElement.getElement().classList.remove("selected");
+        selectedElement.listDOM.classList.remove("selected");
+    }
     selectedElement = newElement;
 
     // Modify inputs
     if (selectedElement) {
         selectedElement.getElement().classList.add("selected");
+        selectedElement.listDOM.classList.add("selected");
 
         // Enable inputs
         elementXInputDOM.removeAttribute("disabled");
@@ -507,7 +529,7 @@ elementListUpBtnDOM.addEventListener("click", () => {
         elementListDOM.insertBefore(el, el.previousElementSibling);
 
         // Move sorting position
-        selectedElement.setSortingPos(selectedElement.getSortingPos() - 1);
+        selectedElement.setSortingPos(selectedElement.getSortingPos() + 1);
     }
 });
 
@@ -528,7 +550,7 @@ elementListDownBtnDOM.addEventListener("click", () => {
         }
 
         // Move sorting position
-        selectedElement.setSortingPos(selectedElement.getSortingPos() + 1);
+        selectedElement.setSortingPos(selectedElement.getSortingPos() - 1);
     }
 });
 
