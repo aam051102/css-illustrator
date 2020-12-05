@@ -1,8 +1,12 @@
 # CSS Illustrator
 
+[Live demo](https://ahlgreen.net/public/content/css-illustrator/)
+
 A simple and intuitive interface for the creation of illustrations using CSS Gradients.
 
-## Local execution
+Allows artists to build illustrations using rectangles, circles and triangles in variable sizes.
+
+## Building
 
 ### Install
 
@@ -10,7 +14,7 @@ A simple and intuitive interface for the creation of illustrations using CSS Gra
 npm install
 ```
 
-Installs the necessary dependencies.
+Installs the necessary pre-processing dependencies.
 
 ### Build
 
@@ -18,7 +22,7 @@ Installs the necessary dependencies.
 npm run build
 ```
 
-Builds the tool to /dist in the root directory.
+Builds the project to /dist in the root directory.
 
 ### Development Environment
 
@@ -30,15 +34,21 @@ Hosts a version of the build with watched files on localhost:8080.
 
 ## Dependencies
 
--   @babel/core
--   @babel/preset-env
--   gulp
--   gulp-babel
--   gulp-clean-css
--   gulp-connect
--   gulp-htmlmin
--   gulp-minify
--   gulp-rename
+### Included
+
+-   [Halfmoon](https://www.gethalfmoon.com/)
+
+### Pre-processing
+
+-   [@babel/core](https://github.com/babel/babel)
+-   [@babel/preset-env](https://github.com/babel/babel)
+-   [gulp](https://github.com/gulpjs/gulp)
+-   [gulp-babel](https://github.com/babel/gulp-babel)
+-   [gulp-clean-css](https://github.com/scniro/gulp-clean-css)
+-   [gulp-connect](https://github.com/avevlad/gulp-connect)
+-   [gulp-htmlmin](https://github.com/jonschlinkert/gulp-htmlmin)
+-   [gulp-minify](https://github.com/hustxiaoc/gulp-minify)
+-   [gulp-rename](https://github.com/hparra/gulp-rename)
 
 ## License
 
