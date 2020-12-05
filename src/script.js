@@ -2,14 +2,134 @@ let selectedElement = undefined;
 let clipboard = undefined;
 let shiftHeld = false;
 let elements = [];
+let outputTypes = [
+    // CSS Gradient
+    () => {
+        let code = "body {\n    background: ";
+
+        let codeElements = [];
+        codeElements.length = elements.length;
+
+        elements.forEach((element) => {
+            let sortingPos = element.getSortingPos();
+
+            if (element.getType() == "rect") {
+                // Rectangle
+                codeElements[
+                    sortingPos
+                ] = `linear-gradient(0deg, ${element.getColor()}, ${element.getColor()}) ${element.getX()}px ${element.getY()}px/${element.getWidth()}px ${element.getHeight()}px no-repeat, `;
+            } else if (element.getType() == "circle") {
+                // Circle
+                codeElements[
+                    sortingPos
+                ] = `radial-gradient(${element.getColor()} ${
+                    element.getWidth() / 2
+                }px, transparent ${
+                    element.getWidth() / 2
+                }px) ${element.getX()}px ${element.getY()}px/${element.getWidth()}px ${element.getHeight()}px no-repeat, `;
+            } else if (element.getType() == "triangle") {
+                /// Triangle
+                // Get leg length
+                let legLength = Math.sqrt(
+                    Math.pow(element.getHeight(), 2) +
+                        Math.pow(element.getWidth() / 2, 2)
+                );
+
+                // Get COS(angle)
+                let angleCos =
+                    (Math.pow(legLength, 2) +
+                        Math.pow(legLength, 2) -
+                        Math.pow(element.getWidth(), 2)) /
+                    (2 * legLength * legLength);
+
+                // Get angle
+                let angle = Math.acos(angleCos) * (180 / Math.PI);
+
+                let startDeg = 180 - angle / 2;
+
+                codeElements[
+                    sortingPos
+                ] = `conic-gradient(from ${startDeg}deg at 50% 0%, transparent 0deg, ${element.getColor()} 0deg ${angle}deg, transparent 0deg) ${element.getX()}px ${element.getY()}px/${element.getWidth()}px ${element.getHeight()}px no-repeat, `;
+            }
+        });
+
+        for (let i = codeElements.length - 1; i >= 0; i--) {
+            code += codeElements[i];
+        }
+
+        code += "transparent;\n}";
+
+        return code;
+    },
+    // CSS/HTML mix
+    () => {
+        let code = "";
+
+        let codeElements = [];
+        codeElements.length = elements.length;
+
+        elements.forEach((element) => {
+            let sortingPos = element.getSortingPos();
+
+            if (element.getType() == "rect") {
+                // Rectangle
+                codeElements[
+                    sortingPos
+                ] = `linear-gradient(0deg, ${element.getColor()}, ${element.getColor()}) ${element.getX()}px ${element.getY()}px/${element.getWidth()}px ${element.getHeight()}px no-repeat, `;
+            } else if (element.getType() == "circle") {
+                // Circle
+                codeElements[
+                    sortingPos
+                ] = `radial-gradient(${element.getColor()} ${
+                    element.getWidth() / 2
+                }px, transparent ${
+                    element.getWidth() / 2
+                }px) ${element.getX()}px ${element.getY()}px/${element.getWidth()}px ${element.getHeight()}px no-repeat, `;
+            } else if (element.getType() == "triangle") {
+                /// Triangle
+                // Get leg length
+                let legLength = Math.sqrt(
+                    Math.pow(element.getHeight(), 2) +
+                        Math.pow(element.getWidth() / 2, 2)
+                );
+
+                // Get COS(angle)
+                let angleCos =
+                    (Math.pow(legLength, 2) +
+                        Math.pow(legLength, 2) -
+                        Math.pow(element.getWidth(), 2)) /
+                    (2 * legLength * legLength);
+
+                // Get angle
+                let angle = Math.acos(angleCos) * (180 / Math.PI);
+
+                let startDeg = 180 - angle / 2;
+
+                codeElements[
+                    sortingPos
+                ] = `conic-gradient(from ${startDeg}deg at 50% 0%, transparent 0deg, ${element.getColor()} 0deg ${angle}deg, transparent 0deg) ${element.getX()}px ${element.getY()}px/${element.getWidth()}px ${element.getHeight()}px no-repeat, `;
+            }
+        });
+
+        for (let i = codeElements.length - 1; i >= 0; i--) {
+            code += codeElements[i];
+        }
+
+        return code;
+    },
+];
 
 // Element queries
 const canvasDOM = document.querySelector("#canvas");
-const codeOutputDOM = document.querySelector("#code-output");
-const codeGenerateDOM = document.querySelector("#code-generate");
-const elementListDOM = document.querySelector("#element-list");
 const creationElementsDOM = document.querySelector("#creation-elements");
+
+const codeViewDOM = document.querySelector("#code-view");
+const codeTypeDOM = document.querySelector("#code-type");
+const generateCodeDOM = document.querySelector("#generate-code");
+const codeOutputDOM = document.querySelector("#code-output");
 const copyCodeDOM = document.querySelector("#copy-code");
+
+const elementListDOM = document.querySelector("#element-list");
 const elementListUpBtnDOM = document.querySelector(".element-list-up-btn");
 const elementListDownBtnDOM = document.querySelector(".element-list-down-btn");
 
@@ -250,59 +370,7 @@ class DragElement {
 
 // Functions
 const generateCode = () => {
-    let code = "body {\n    background: ";
-
-    let codeElements = [];
-    codeElements.length = elements.length;
-
-    elements.forEach((element) => {
-        let sortingPos = element.getSortingPos();
-
-        if (element.getType() == "rect") {
-            // Rectangle
-            codeElements[
-                sortingPos
-            ] = `linear-gradient(0deg, ${element.getColor()}, ${element.getColor()}) ${element.getX()}px ${element.getY()}px/${element.getWidth()}px ${element.getHeight()}px no-repeat, `;
-        } else if (element.getType() == "circle") {
-            // Circle
-            codeElements[sortingPos] = `radial-gradient(${element.getColor()} ${
-                element.getWidth() / 2
-            }px, transparent ${
-                element.getWidth() / 2
-            }px) ${element.getX()}px ${element.getY()}px/${element.getWidth()}px ${element.getHeight()}px no-repeat, `;
-        } else if (element.getType() == "triangle") {
-            /// Triangle
-            // Get leg length
-            let legLength = Math.sqrt(
-                Math.pow(element.getHeight(), 2) +
-                    Math.pow(element.getWidth() / 2, 2)
-            );
-
-            // Get COS(angle)
-            let angleCos =
-                (Math.pow(legLength, 2) +
-                    Math.pow(legLength, 2) -
-                    Math.pow(element.getWidth(), 2)) /
-                (2 * legLength * legLength);
-
-            // Get angle
-            let angle = Math.acos(angleCos) * (180 / Math.PI);
-
-            let startDeg = 180 - angle / 2;
-
-            codeElements[
-                sortingPos
-            ] = `conic-gradient(from ${startDeg}deg at 50% 0%, transparent 0deg, ${element.getColor()} 0deg ${angle}deg, transparent 0deg) ${element.getX()}px ${element.getY()}px/${element.getWidth()}px ${element.getHeight()}px no-repeat, `;
-        }
-    });
-
-    for (let i = codeElements.length - 1; i >= 0; i--) {
-        code += codeElements[i];
-    }
-
-    code += "transparent;\n}";
-
-    codeOutputDOM.textContent = code;
+    codeOutputDOM.textContent = outputTypes[parseInt(codeTypeDOM.value)]();
 };
 
 const changeSelectedElement = (newElement) => {
@@ -325,6 +393,9 @@ const changeSelectedElement = (newElement) => {
         elementHeightInputDOM.removeAttribute("disabled");
         elementColorInputDOM.removeAttribute("disabled");
 
+        elementListUpBtnDOM.removeAttribute("disabled");
+        elementListDownBtnDOM.removeAttribute("disabled");
+
         updateElementValues();
     } else {
         // Disable inputs
@@ -333,6 +404,9 @@ const changeSelectedElement = (newElement) => {
         elementWidthInputDOM.setAttribute("disabled", "");
         elementHeightInputDOM.setAttribute("disabled", "");
         elementColorInputDOM.setAttribute("disabled", "");
+
+        elementListUpBtnDOM.setAttribute("disabled", "");
+        elementListDownBtnDOM.setAttribute("disabled", "");
     }
 };
 
@@ -667,7 +741,7 @@ copyCodeDOM.addEventListener("click", () => {
     document.execCommand("copy");
 });
 
-codeGenerateDOM.addEventListener("click", generateCode);
+generateCodeDOM.addEventListener("click", generateCode);
 
 // Element X
 elementXInputDOM.addEventListener("input", (event) => {

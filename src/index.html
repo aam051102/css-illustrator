@@ -39,6 +39,18 @@
                     </a>
                     <h5 class="modal-title">Code</h5>
                     <div class="form-group">
+                        <div class="mb-20 d-flex">
+                            <select class="form-control mr-5" id="code-type">
+                                <option value="0" selected>
+                                    CSS Gradients
+                                </option>
+                                <option value="1">HTML/CSS Mix</option>
+                            </select>
+                            <button id="generate-code" class="btn btn-primary">
+                                Generate
+                            </button>
+                        </div>
+
                         <textarea
                             class="form-control"
                             id="code-output"
@@ -67,7 +79,7 @@
                         class="btn btn-primary"
                         type="button"
                         role="button"
-                        id="code-generate"
+                        id="code-view"
                         href="#view-code"
                     >
                         View Code
@@ -164,10 +176,16 @@
                         <h2 class="content-title">Hierarchy</h2>
 
                         <div>
-                            <button class="btn element-list-up-btn mr-5">
+                            <button
+                                class="btn element-list-up-btn mr-5"
+                                disabled
+                            >
                                 &#x2191;
                             </button>
-                            <button class="btn element-list-down-btn mr-5">
+                            <button
+                                class="btn element-list-down-btn mr-5"
+                                disabled
+                            >
                                 &#x2193;
                             </button>
                         </div>
