@@ -125,8 +125,6 @@ class TimelineElement {
     constructor(type, ...args) {
         this.type = type;
         this.args = args;
-
-        console.log(args);
     }
 
     undo() {}
@@ -345,7 +343,6 @@ class DragElement {
 
     destroy() {
         elements.splice(this.index, 1);
-        console.log(elements);
 
         for (let i = 0; i < elements.length; i++) {
             let el = elements[i];
