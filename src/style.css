@@ -10,13 +10,28 @@ body {
 .creation-element {
     height: 30px;
     width: 30px;
-    background-color: #2980c1;
     margin: 0 1em;
-    transition: box-shadow 0.5s cubic-bezier(0.075, 0.82, 0.165, 1);
     outline: none;
     box-sizing: border-box;
     touch-action: none;
     position: relative;
+}
+
+.creation-element .fill {
+    position: absolute;
+    top: 0;
+    left: 0;
+    bottom: 0;
+    right: 0;
+    background-color: #2980c1;
+}
+
+.creation-element-circle .fill {
+    border-radius: 100%;
+}
+
+.creation-element-triangle .fill {
+    clip-path: polygon(50% 0%, 100% 100%, 0% 100%);
 }
 
 #canvas .creation-element.selected {
@@ -29,12 +44,16 @@ body {
     box-shadow: 0 2px 10px 1px #0009;
 }
 
-.creation-element-circle {
-    border-radius: 100%;
-}
+@supports (filter: drop-shadow(0 2px 10px #0009)) {
+    #canvas .creation-element.selected {
+        box-shadow: none;
+        filter: drop-shadow(0 2px 10px #0009);
+    }
 
-.creation-element-triangle {
-    clip-path: polygon(50% 0%, 100% 100%, 0% 100%);
+    .creation-element:hover {
+        box-shadow: none;
+        filter: drop-shadow(0 2px 10px #0009);
+    }
 }
 
 #canvas {

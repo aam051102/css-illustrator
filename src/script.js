@@ -292,7 +292,7 @@ class DragElement {
 
     setColor(color) {
         this.color = color;
-        this.elementDOM.style.backgroundColor = color;
+        this.elementDOM.querySelector(".fill").style.backgroundColor = color;
         updateElementValues();
     }
 
@@ -482,11 +482,15 @@ let dragOriginalHeight = 0;
 let sentTriangleWarning = false;
 
 creationElementsDOM.addEventListener("mousedown", (event) => {
-    if (
-        dragging == undefined &&
-        event.target.classList.contains("creation-element")
-    ) {
-        let el = new DragElement(event.target, "Element");
+    if (dragging == undefined) {
+        let el;
+        if (event.target.classList.contains("creation-element")) {
+            el = new DragElement(event.target, "Element");
+        } else if (event.target.classList.contains("fill")) {
+            el = new DragElement(event.target.parentNode, "Element");
+        } else {
+            return;
+        }
 
         dragging = el;
         changeSelectedElement(el);
@@ -522,11 +526,17 @@ creationElementsDOM.addEventListener("mousedown", (event) => {
 
 canvasDOM.addEventListener("mousemove", (event) => {
     // Change cursor
-    if (
-        event.target.classList.contains("creation-element") &&
-        dragging == undefined
-    ) {
-        let box = event.target.getBoundingClientRect();
+    if (dragging == undefined) {
+        let el;
+        if (event.target.classList.contains("creation-element")) {
+            el = event.target;
+        } else if (event.target.classList.contains("fill")) {
+            el = event.target.parentNode;
+        } else {
+            return;
+        }
+
+        let box = el.getBoundingClientRect();
         let edgeSize = 10;
         let edge = 0;
 
@@ -536,7 +546,7 @@ canvasDOM.addEventListener("mousemove", (event) => {
             event.clientX >= box.right - edgeSize
         ) {
             edge = 2;
-            event.target.style.cursor = "e-resize";
+            el.style.cursor = "e-resize";
         }
         // West
         else if (
@@ -544,7 +554,7 @@ canvasDOM.addEventListener("mousemove", (event) => {
             event.clientX <= box.left + edgeSize
         ) {
             edge = 1;
-            event.target.style.cursor = "w-resize";
+            el.style.cursor = "w-resize";
         }
 
         if (
@@ -553,13 +563,13 @@ canvasDOM.addEventListener("mousemove", (event) => {
         ) {
             if (edge == 1) {
                 // South west
-                event.target.style.cursor = "sw-resize";
+                el.style.cursor = "sw-resize";
             } else if (edge == 2) {
                 // South east
-                event.target.style.cursor = "se-resize";
+                el.style.cursor = "se-resize";
             } else {
                 // South
-                event.target.style.cursor = "s-resize";
+                el.style.cursor = "s-resize";
             }
             edge = 3;
         } else if (
@@ -568,19 +578,19 @@ canvasDOM.addEventListener("mousemove", (event) => {
         ) {
             if (edge == 1) {
                 // North west
-                event.target.style.cursor = "nw-resize";
+                el.style.cursor = "nw-resize";
             } else if (edge == 2) {
                 // North east
-                event.target.style.cursor = "ne-resize";
+                el.style.cursor = "ne-resize";
             } else {
                 // North
-                event.target.style.cursor = "n-resize";
+                el.style.cursor = "n-resize";
             }
             edge = 3;
         }
 
         if (edge == 0) {
-            event.target.style.cursor = "move";
+            el.style.cursor = "move";
         }
     }
 });
@@ -696,22 +706,30 @@ elementListDownBtnDOM.addEventListener("click", () => {
 
 // Event listeners
 canvasDOM.addEventListener("mousedown", (event) => {
-    if (event.target !== canvasDOM && dragging == undefined) {
-        let el = elements[parseInt(event.target.getAttribute("data-index"))];
+    if (dragging == undefined) {
+        let el;
+        let target;
+        if (event.target.classList.contains("creation-element")) {
+            target = event.target;
+        } else if (event.target.classList.contains("fill")) {
+            target = event.target.parentNode;
+        } else {
+            changeSelectedElement(undefined);
+            return;
+        }
+
+        el = elements[parseInt(target.getAttribute("data-index"))];
         dragging = el;
 
-        dragType = event.target.style.cursor;
-        mouseOffsetX =
-            event.clientX - event.target.getBoundingClientRect().left;
-        mouseOffsetY = event.clientY - event.target.getBoundingClientRect().top;
+        dragType = target.style.cursor;
+        mouseOffsetX = event.clientX - target.getBoundingClientRect().left;
+        mouseOffsetY = event.clientY - target.getBoundingClientRect().top;
         dragOriginalWidth = el.getWidth();
         dragOriginalHeight = el.getHeight();
         dragOriginalX = el.getX();
         dragOriginalY = el.getY();
 
         changeSelectedElement(el);
-    } else {
-        changeSelectedElement(undefined);
     }
 });
 
