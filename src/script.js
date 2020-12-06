@@ -2,6 +2,8 @@ let selectedElement = undefined;
 let clipboard = undefined;
 let shiftHeld = false;
 let elements = [];
+let timeline = [];
+let timelinePosition = 0;
 let outputTypes = [
     // CSS Gradients
     () => {
@@ -119,6 +121,19 @@ const elementHeightInputDOM = document.querySelector("#element-height");
 const elementColorInputDOM = document.querySelector("#element-color");
 
 // Classes
+class TimelineElement {
+    constructor(type, ...args) {
+        this.type = type;
+        this.args = args;
+
+        console.log(args);
+    }
+
+    undo() {}
+
+    redo() {}
+}
+
 class DragElement {
     constructor(element, name) {
         this.index = elements.length;
@@ -407,6 +422,12 @@ const resizeEast = (event) => {
             dragging.getX() +
             (dragOriginalWidth - mouseOffsetX)
     );
+
+    if (event.shiftKey) {
+        dragging.restrictHeight(
+            (dragOriginalHeight / dragOriginalWidth) * dragging.getWidth()
+        );
+    }
 };
 
 const resizeSouth = (event) => {
@@ -428,6 +449,16 @@ const resizeWest = (event) => {
             dragOriginalWidth +
             mouseOffsetX
     );
+
+    if (event.shiftKey) {
+        dragging.restrictHeight(
+            (dragOriginalHeight / dragOriginalWidth) * dragging.getWidth()
+        );
+
+        dragging.restrictY(
+            dragOriginalY - (dragging.getHeight() - dragOriginalHeight)
+        );
+    }
 };
 
 const resizeNorth = (event) => {
@@ -502,33 +533,24 @@ canvasDOM.addEventListener("mousemove", (event) => {
         let edgeSize = 10;
         let edge = 0;
 
-        // West
-        if (event.clientX >= box.left && event.clientX <= box.left + edgeSize) {
-            edge = 1;
-            event.target.style.cursor = "w-resize";
-        }
         // East
-        else if (
+        if (
             event.clientX <= box.right &&
             event.clientX >= box.right - edgeSize
         ) {
             edge = 2;
             event.target.style.cursor = "e-resize";
         }
+        // West
+        else if (
+            event.clientX >= box.left &&
+            event.clientX <= box.left + edgeSize
+        ) {
+            edge = 1;
+            event.target.style.cursor = "w-resize";
+        }
 
-        if (event.clientY >= box.top && event.clientY <= box.top + edgeSize) {
-            if (edge == 1) {
-                // North west
-                event.target.style.cursor = "nw-resize";
-            } else if (edge == 2) {
-                // North east
-                event.target.style.cursor = "ne-resize";
-            } else {
-                // North
-                event.target.style.cursor = "n-resize";
-            }
-            edge = 3;
-        } else if (
+        if (
             event.clientY <= box.bottom &&
             event.clientY >= box.bottom - edgeSize
         ) {
@@ -541,6 +563,21 @@ canvasDOM.addEventListener("mousemove", (event) => {
             } else {
                 // South
                 event.target.style.cursor = "s-resize";
+            }
+            edge = 3;
+        } else if (
+            event.clientY >= box.top &&
+            event.clientY <= box.top + edgeSize
+        ) {
+            if (edge == 1) {
+                // North west
+                event.target.style.cursor = "nw-resize";
+            } else if (edge == 2) {
+                // North east
+                event.target.style.cursor = "ne-resize";
+            } else {
+                // North
+                event.target.style.cursor = "n-resize";
             }
             edge = 3;
         }
@@ -607,6 +644,20 @@ document.body.addEventListener("mousemove", (event) => {
 });
 
 window.addEventListener("mouseup", (event) => {
+    if (dragging) {
+        timeline.push(
+            new TimelineElement(
+                "drag",
+                dragging,
+                dragOriginalX,
+                dragOriginalY,
+                dragOriginalWidth,
+                dragOriginalHeight
+            )
+        );
+        timelinePosition = timeline.length - 1;
+    }
+
     dragging = undefined;
 });
 
@@ -672,6 +723,9 @@ document.addEventListener("keydown", (event) => {
         // Delete
         case "Delete":
             if (selectedElement) {
+                timeline.push(new TimelineElement("delete", selectedElement));
+                timelinePosition = timeline.length - 1;
+
                 selectedElement.destroy();
                 changeSelectedElement(undefined);
             }
@@ -696,9 +750,29 @@ document.addEventListener("keydown", (event) => {
         // Paste
         case "v":
             if (event.ctrlKey && clipboard) {
-                let clippedElement = clipboard.copy();
+                timeline.push(new TimelineElement("paste", clippedElement));
+                timelinePosition = timeline.length - 1;
 
+                let clippedElement = clipboard.copy();
                 changeSelectedElement(clippedElement);
+            }
+            break;
+
+        // Undo
+        case "z":
+            if (event.ctrlKey && timelinePosition > 0) {
+                timelinePosition--;
+
+                timeline[timelinePosition].undo();
+            }
+            break;
+
+        // Redo
+        case "r":
+            if (event.ctrlKey && timelinePosition + 1 < timeline.length) {
+                timelinePosition++;
+
+                timeline[timelinePosition].redo();
             }
             break;
 
