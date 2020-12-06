@@ -413,12 +413,19 @@ const updateElementValues = () => {
 };
 
 const resizeEast = (event) => {
-    dragging.restrictWidth(
-        event.clientX -
-            canvasDOM.getBoundingClientRect().left -
-            dragging.getX() +
-            (dragOriginalWidth - mouseOffsetX)
-    );
+    let newWidth =
+        dragOriginalX -
+        (event.clientX - canvasDOM.getBoundingClientRect().left) -
+        dragOriginalWidth +
+        mouseOffsetX;
+
+    dragging.restrictWidth(Math.abs(newWidth));
+
+    if (newWidth < 0) {
+        dragging.restrictX(dragOriginalX);
+    } else {
+        dragging.restrictX(dragOriginalX - dragging.getWidth());
+    }
 
     if (event.shiftKey) {
         dragging.restrictHeight(
@@ -428,24 +435,37 @@ const resizeEast = (event) => {
 };
 
 const resizeSouth = (event) => {
-    dragging.restrictHeight(
-        event.clientY -
-            canvasDOM.getBoundingClientRect().top -
-            dragging.getY() +
-            (dragOriginalHeight - mouseOffsetY)
-    );
+    let newHeight =
+        dragOriginalY -
+        (event.clientY - canvasDOM.getBoundingClientRect().top) -
+        dragOriginalHeight +
+        mouseOffsetY;
+
+    dragging.restrictHeight(Math.abs(newHeight));
+
+    if (newHeight < 0) {
+        dragging.restrictY(dragOriginalY);
+    } else {
+        dragging.restrictY(dragOriginalY - dragging.getHeight());
+    }
 };
 
 const resizeWest = (event) => {
-    dragging.restrictWidth(
+    let newWidth =
         dragOriginalX -
-            (event.clientX - canvasDOM.getBoundingClientRect().left) +
-            dragOriginalWidth +
-            mouseOffsetX
-    );
-    dragging.restrictX(
-        dragOriginalX - (dragging.getWidth() - dragOriginalWidth)
-    );
+        (event.clientX - canvasDOM.getBoundingClientRect().left) +
+        dragOriginalWidth +
+        mouseOffsetX;
+
+    dragging.restrictWidth(Math.abs(newWidth));
+
+    if (newWidth > 0) {
+        dragging.restrictX(
+            dragOriginalX - (dragging.getWidth() - dragOriginalWidth)
+        );
+    } else {
+        dragging.restrictX(dragOriginalX + dragOriginalWidth);
+    }
 
     if (event.shiftKey) {
         dragging.restrictHeight(
@@ -459,15 +479,21 @@ const resizeWest = (event) => {
 };
 
 const resizeNorth = (event) => {
-    dragging.restrictHeight(
+    let newHeight =
         dragOriginalY -
-            (event.clientY - canvasDOM.getBoundingClientRect().top) +
-            dragOriginalHeight +
-            mouseOffsetY
-    );
-    dragging.restrictY(
-        dragOriginalY - (dragging.getHeight() - dragOriginalHeight)
-    );
+        (event.clientY - canvasDOM.getBoundingClientRect().top) +
+        dragOriginalHeight +
+        mouseOffsetY;
+
+    dragging.restrictHeight(Math.abs(newHeight));
+
+    if (newHeight > 0) {
+        dragging.restrictY(
+            dragOriginalY - (dragging.getHeight() - dragOriginalHeight)
+        );
+    } else {
+        dragging.restrictY(dragOriginalY + dragOriginalHeight);
+    }
 };
 
 // Interaction
