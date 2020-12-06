@@ -437,14 +437,14 @@ const resizeSouth = (event) => {
 };
 
 const resizeWest = (event) => {
-    dragging.restrictX(
-        event.clientX - canvasDOM.getBoundingClientRect().left - mouseOffsetX
-    );
     dragging.restrictWidth(
         dragOriginalX -
             (event.clientX - canvasDOM.getBoundingClientRect().left) +
             dragOriginalWidth +
             mouseOffsetX
+    );
+    dragging.restrictX(
+        dragOriginalX - (dragging.getWidth() - dragOriginalWidth)
     );
 
     if (event.shiftKey) {
@@ -459,14 +459,14 @@ const resizeWest = (event) => {
 };
 
 const resizeNorth = (event) => {
-    dragging.restrictY(
-        event.clientY - canvasDOM.getBoundingClientRect().top - mouseOffsetY
-    );
     dragging.restrictHeight(
         dragOriginalY -
             (event.clientY - canvasDOM.getBoundingClientRect().top) +
             dragOriginalHeight +
             mouseOffsetY
+    );
+    dragging.restrictY(
+        dragOriginalY - (dragging.getHeight() - dragOriginalHeight)
     );
 };
 
